@@ -2,7 +2,7 @@
 
 JavaScript is a single-threaded language, but browsers use multiple threads to handle the event loop. I set out to explore how much we can leverage the multi-threaded nature of browsers when writing recursive functions. The results are decidedly mixed and deeply confusing. And along the way they reveal surprising and significant differences between Chromium-based browsers and Firefox, Safari, and Edge, between iOS and other operating systems, and between memoization in synchronous and asynchronous functions.
 
-I wrote a benchmark and analysis tool, [Explorations in Asynchronicity][explorations], to obtain my results. Here I discuss the most interesting ones. Readers are invited to follow along by exploring more results [here][explorations-results], or test the functions I talk about on their own [here][explorations-benchmarks].
+To obtain my results, I wrote [Explorations in Asynchronicity][explorations], a benchmark and analysis tool. Here I discuss the most interesting results. Readers are invited to follow along by exploring [more results][explorations-results], analyzing the raw data available through the [public API][api], or [running benchmarks][explorations-benchmarks] on their own devices.
 
 ## Fibonacci: synchronous and asynchronous
 
@@ -270,6 +270,8 @@ I don't even come close to having a suspicion about what's going on here. ¯\\\_
 
 [explorations]: https://async.matthiasjenny.com/
 [explorations-results]: https://async.matthiasjenny.com/#results
+[api]: https://github.com/m1010j/async-explorations#api
+[source]: https://github.com/m1010j/async-explorations
 [explorations-benchmarks]: https://async.matthiasjenny.com/#benchmarks
 [stacer]: https://github.com/oguzhaninan/Stacer
 [web-workers]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers
