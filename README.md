@@ -17,7 +17,7 @@ function syncFib(n) {
 }
 ```
 
-This is a classic `O(n ^ 2)` function, as demonstrated by the average calculation times of `syncFib(1)` through `syncFib(45)`:
+This is a classic `O(n ^ 2)` function, as exhibited by the average calculation times of `syncFib(1)` through `syncFib(45)`:
 
 ![all browsers avg time sync result][all-avg-sync]
 
