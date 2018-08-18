@@ -1,8 +1,8 @@
 # Don't read this if you seek clarity about asynchronicity in JavaScript
 
-JavaScript is a single-threaded language, but browsers use multiple threads to handle the event loop. I set out to explore how much we can leverage the multi-threaded nature of browsers when writing recursive functions. The results are decidedly mixed and deeply confusing. And along the way they reveal surprising and significant differences between Chromium-based browsers and Firefox, Safari, and Edge, between iOS and other operating systems, and between memoization in synchronous and asynchronous functions.
+JavaScript is a single-threaded language, but browsers use multiple threads to handle asynchronicity. I set out to explore how much we can leverage the multi-threaded nature of browsers with asynchronous recursive functions. The results are decidedly mixed and deeply confusing. And along the way they reveal surprising and significant differences between Chromium-based browsers and Firefox, Safari, and Edge, between iOS and other operating systems, and between memoization in synchronous and asynchronous functions.
 
-To obtain my results, I wrote [Explorations in Asynchronicity][explorations], a benchmark and analysis tool. Here I discuss the most interesting results. Readers are invited to follow along by exploring [more results][explorations-results], analyzing the raw data available through the [public API][api], or [running benchmarks][explorations-benchmarks] on their own devices.
+To obtain my results, I wrote [Explorations in Asynchronicity][explorations], a benchmark and analysis tool. Here I discuss the most surprising results. Readers are invited to follow along by exploring [more results][explorations-results], analyzing the raw data available through the [public API][api], or [running benchmarks][explorations-benchmarks] on their own devices.
 
 ## Fibonacci: synchronous and asynchronous
 
