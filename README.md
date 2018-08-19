@@ -1,4 +1,4 @@
-# Don't read this if you seek clarity about asynchronicity in JavaScript
+# Async recursion: promising, surprising, but foremost confusing
 
 JavaScript is a single-threaded language, but browsers use multiple threads to handle asynchronicity. I set out to explore how much we can leverage the multi-threaded nature of browsers with asynchronous recursive functions. The results are decidedly mixed and deeply confusing. And along the way they reveal surprising and significant differences between Chromium-based browsers and Firefox, Safari, and Edge, between iOS and other operating systems, and between memoization in synchronous and asynchronous functions.
 
