@@ -2,7 +2,14 @@
 
 ## I set out to write asynchronous recursive functions. I wasn't prepared for what I discovered.
 
-JavaScript is a single-threaded language, but browsers use multiple threads to handle asynchronicity. I set out to explore how much we can leverage the multi-threaded nature of browsers with asynchronous recursive functions. The results were decidedly mixed and deeply confusing. And along the way I stumbled upon surprising and significant differences between Chromium-based browsers and Firefox, Safari, and Edge, between iOS and other operating systems, and between memoization in synchronous and asynchronous functions.
+JavaScript is a single-threaded language, but browsers use multiple threads to handle asynchronicity. I set out to explore how much we can leverage the multi-threaded nature of browsers with asynchronous recursive functions. The results were decidedly mixed and deeply confusing. And along the way I stumbled upon a number of surprising facts:
+
+- In Chromium-based browsers, unlike in Firefox, Safari, and Edge, some asynchronous recursive functions are executed using multiple logical cores.
+- But other, more computationally intensive, asynchronous recursive functions are executed using just one logical core in all browsers.
+- Both synchronous and asynchronous recursive functions run more slowly when invoked by a Web Worker than when invoked in the main thread.
+- On iOS, Chromium-based browsers never use multiple logical cores.
+- On Android, Chromium-based browsers execute some asynchronous recursive functinos even faster than the number of logical cores available to them would suggest.
+- Memoization doesn't have any apparent performance benefit for asynchronous recursive functions.
 
 To obtain my results, I wrote [Explorations in Asynchronicity][explorations], a benchmark and analysis tool. Here I discuss the most surprising results. Readers are invited to follow along by exploring [more results][explorations-results], analyzing the raw data available through the [public API][api], or [running benchmarks][explorations-benchmarks] on their own devices.
 
@@ -147,9 +154,17 @@ A look at the CPU activity confirms that Chromium doesn't use multiple cores in 
 
 For whatever reason, when it matters, V8 decides to forego parallelism.
 
+### Better performance without Web Workers
+
+All results presented so far use [Web Workers][web-workers] to execute the Fibonacci functions. This leads to a much better user experience, since browsers run Web Workers in background threads, which makes it so that the Fibonacci functions don't block the rest of the page. Interestingly, invoking the functions in the main thread without the use of Web Workers is quite a bit faster:
+
+![Linux Firefox Chromium sync and async without Worker result][linux-firefox-chromium-sync-and-async-without-worker]
+
+This difference is particularly significant for `async` in Chromium-based browsers: On the 12-core Dell machine `asyncFib(30)` took on average 4.3 seconds without a Web Worker and 9.3 seconds with a Web Worker.
+
 ### What about Web Workers?
 
-You might think that [Web Workers][web-workers] are the solution here: They are specifically designed to run scripts in background threads. In fact, [Explorations in Asynchronicity][explorations] uses Web Workers to execute the benchmarks. That's what allows you to run multiple benchmarks at once or peruse the results while you have benchmarks running. What's more, Web Workers can spawn subworkers. (Although Chromium-based browsers require a [polyfill][subworkers] for subworker functionality.)
+Despite this performance hit, it might be wondered whether we should use Web Workers all the way, by having Web Workers spawn subworkers for the recursive call of the Fibonacci function. (Note that Chromium-based browsers require a [polyfill][subworkers] for subworker functionality.)
 
 Unfortunately, there's no way to await a message from a Web Worker. The Web Worker API only provides us with an `onmessage` event that triggers a callback _whenever_ the Web Worker posts a message. It is thus not possible to implement Fibonacci where the recursive calls spawn subworkers. The same is true for the brand new [`worker` module][node-worker-threads] in Node.js.
 
@@ -267,6 +282,7 @@ I don't even come close to having a suspicion about what's going on here. ¯\\\_
 [ios-safari-firefox-chromium-sync-and-async]: https://www.github.com/m1010j/async-explorations-writeup/raw/master/media/ios-safari-firefox-chromium-sync-and-async.png 'iOS Safari Firefox Chromium sync and async result'
 [android-firefox-chromium-sync-and-async]: https://www.github.com/m1010j/async-explorations-writeup/raw/master/media/android-firefox-chromium-sync-and-async.png 'Android Firefox Chromium sync and async result'
 [linux-firefox-chromium-async-and-async-memo]: https://www.github.com/m1010j/async-explorations-writeup/raw/master/media/linux-firefox-chromium-async-and-async-memo.png 'Linux Firefox Chromium async and asyncMemo result'
+[linux-firefox-chromium-sync-and-async-without-worker]: https://www.github.com/m1010j/async-explorations-writeup/raw/master/media/linux-firefox-chromium-sync-and-async-without-worker.png 'Linux Firefox Chromium sync and async without Worker result'
 
 <!-- Links: -->
 
