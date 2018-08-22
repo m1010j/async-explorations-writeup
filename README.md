@@ -2,12 +2,14 @@
 
 ## I set out to write asynchronous recursive functions. I wasn't prepared for what I discovered.
 
-JavaScript is a single-threaded language, but browsers use multiple threads to handle asynchronicity. I set out to explore how much we can leverage the multi-threaded nature of browsers with asynchronous recursive functions. The results were decidedly mixed and deeply confusing. And along the way I stumbled upon a number of surprising facts:
+JavaScript is a single-threaded language, but browsers use multiple threads to handle asynchronicity. I set out to explore how much we can leverage the multi-threaded nature of browsers with asynchronous recursive functions. The results are decidedly mixed and deeply confusing:
 
 - In Chromium-based browsers, unlike in Firefox, Safari, and Edge, some asynchronous recursive functions are executed using multiple logical cores.
 - But other, more computationally intensive, asynchronous recursive functions are executed using just one logical core in all browsers.
 - Both synchronous and asynchronous recursive functions run more slowly when invoked by a Web Worker than when invoked in the main thread.
-- On iOS, Chromium-based browsers never use multiple logical cores.
+- On Windows, Edge executes asynchronous recursive functions much more slowly than both Chromium-based browsers and Firefox.
+- On macOS, Safari executes synchronous recursive functions faster than Chromium-based browsers and Firefox, and it executes some asynchronous recursive functions faster than Firefox but slower than Chromium-based browsers.
+- On iOS, even Chromium-based browsers never appear to use multiple logical cores.
 - On Android, Chromium-based browsers execute some asynchronous recursive functinos even faster than the number of logical cores available to them would suggest.
 - Memoization doesn't have any apparent performance benefit for asynchronous recursive functions.
 
@@ -162,7 +164,7 @@ All results presented so far use [Web Workers][web-workers] to execute the Fibon
 
 This difference is particularly significant for `async` in Chromium-based browsers: On the 12-core Dell machine `asyncFib(30)` took on average 4.3 seconds without a Web Worker and 9.3 seconds with a Web Worker.
 
-### What about Web Workers?
+### What about subworkers?
 
 Despite this performance hit, it might be wondered whether we should use Web Workers all the way, by having Web Workers spawn subworkers for the recursive call of the Fibonacci function. (Note that Chromium-based browsers require a [polyfill][subworkers] for subworker functionality.)
 
