@@ -5,18 +5,18 @@
 JavaScript is a single-threaded language, but browsers use multiple threads to handle asynchronicity. I set out to explore how much we can leverage the multi-threaded nature of browsers with asynchronous recursive functions. The results are decidedly mixed and deeply confusing:
 
 - In Chromium-based browsers, unlike in Firefox, Safari, and Edge, some asynchronous recursive functions are executed using multiple logical cores.
-- But other, more computationally intensive, asynchronous recursive functions are executed using just one logical core in all browsers.
+- But other asynchronous recursive functions that are more computationally intensive are executed using just one logical core in all browsers.
 - Both synchronous and asynchronous recursive functions run more slowly when invoked by a Web Worker than when invoked in the main thread.
 - On Windows, Edge executes asynchronous recursive functions much more slowly than both Chromium-based browsers and Firefox.
 - On macOS, Safari executes synchronous recursive functions faster than Chromium-based browsers and Firefox, and it executes some asynchronous recursive functions faster than Firefox but slower than Chromium-based browsers.
 - On iOS, even Chromium-based browsers never appear to use multiple logical cores.
-- On Android, Chromium-based browsers execute some asynchronous recursive functinos even faster than the number of logical cores available to them would suggest.
+- On Android, Chromium-based browsers execute some asynchronous recursive functions even faster than the number of logical cores available to them would suggest.
 - In Node.js, there is no slowdown when using the experimental worker module, but when not using workers, Node.js can be slower than Chromium-based browsers.
 - Memoization doesn't have any apparent performance benefit for asynchronous recursive functions.
 
-**tl;dr: Asynchronous recursive functions perform the best when run in the main thread in Chromium-based browsers. But their synchronous counterparts are generally much faster.**
+**tl;dr: Asynchronous recursive functions perform the best when run in the main thread in Chromium-based browsers. But they are never faster, and usually much slower, than their synchronous counterparts.**
 
-To obtain my results, I wrote [Explorations in Asynchronicity][explorations], a benchmark and analysis tool. Here I discuss the most surprising results. Readers are invited to follow along by exploring [more results][explorations-results], analyzing the raw data available through the [public API][api], or [running benchmarks][explorations-benchmarks] on their own devices.
+To obtain my results, I wrote [Explorations in Asynchronicity][explorations], a benchmark and analysis tool. Here I discuss the most surprising results. Readers are invited to follow along by exploring [more results][explorations-results], analyzing the raw data available through the [public API][api], or running their own benchmarks in the [browser][explorations-benchmarks] or on the [command line][cli].
 
 ### Fibonacci: synchronous and asynchronous
 
@@ -48,7 +48,7 @@ async function asyncFib(n) {
 }
 ```
 
-`asyncFib` is an async function that uses `Promise.all` to simultaneiously make the recursive calls. It then awaits until both of those calls are resolved and returns their sum.
+`asyncFib` is an async function that uses `Promise.all` to simultaneously make the two recursive calls. It then awaits until both of those calls are resolved and returns their sum.
 
 How would browsers handle this? Would they use multiple threads to process `asyncFib(n - 1)` and `asyncFib(n - 2)` in parallel? Or would the latter have to wait for the completion of the former?
 
@@ -62,7 +62,7 @@ But upon reflection, this result made sense: Aside from the two recursive calls,
 
 ### Adding busywork
 
-But I hadn't given up hope to use asynchronicity to make my JavaScript multi-threaded. What if we added busywork prior to the recursive calls to drown out the overhead associated with the event queue? Enter `syncBusyFib` and `asyncBusyFib`:
+But I hadn't given up hope on using asynchronicity to make my JavaScript multi-threaded. What if we added busywork prior to the recursive calls to drown out the overhead associated with handling the event queue? Enter `syncBusyFib` and `asyncBusyFib`:
 
 ```javascript
 function syncBusyFib(n) {
@@ -103,9 +103,9 @@ It turns out that the calculation times of `syncBusyFib` and `asyncBusyFib` are 
 
 (Yes, those are two lines on top of each other!)
 
-There we have it: When we slow down our Fibonacci functions with busywork, the overhead required to execute the async version is drowned out. And clearly, `asyncBusyFib` is executed on a single thread, or else we would expect it to be much faster than `syncBusyFib`.
+When we slow down our Fibonacci functions with busywork, the overhead required to execute the async version is drowned out. And clearly, `asyncBusyFib` is executed on a single thread, or else we would expect it to be much faster than `syncBusyFib`.
 
-This impression was borne out when I inspected my CPU activity using [Stacer][stacer]. Here is the CPU activity on a Dell XPS 15 9570 with 12 logical cores (1 CPU with 6 physical cores and hyper-threading) running Ubuntu for `syncBusyFib(13)`:
+This impression was borne out when I inspected my CPU activity using [Stacer][stacer]. Here is the CPU activity when I ran `syncBusyFib(13)` on a Dell XPS 15 9570 with 12 logical cores (1 CPU with 6 physical cores and hyper-threading) running Ubuntu:
 
 ![Stacer syncBusy Firefox 13][stacer-sync-busy-firefox-13]
 
@@ -121,7 +121,7 @@ And I should've expected all of this at the outset: After all, the event queue i
 
 ### A new hope: Chromium
 
-But something surprising happened when broke down the results by browser. Here are the average calculation times of `syncFib` and `asyncFib` in Firefox and Chromium-based browsers (Chromium, Chrome, and Opera) on the Dell XPS 15 9570 on Ubuntu:
+But something surprising happened when I started breaking down the results by browser. Here are the average calculation times of `syncFib` and `asyncFib` in Firefox and Chromium-based browsers (Chromium, Chrome, and Opera) on the Dell XPS 15 9570 on Ubuntu:
 
 ![Linux Firefox Chromium sync and async result][linux-firefox-chromium-sync-and-async]
 
@@ -141,7 +141,7 @@ Chromium uses _all_ 12 logical cores for `asyncFib`! There thus seems to be a fu
 
 To be sure, `asyncFib` is still much slower in Chromium than `syncFib`. But by now I wasn't surprised by that, given the overhead associated with async functions.
 
-Finally, parallel execution of recursive function was within reach, at least for Chromium-based browsers.
+Finally, parallel execution of recursive functions was within reach, at least for Chromium-based browsers.
 
 ### The revenge of busywork
 
@@ -173,6 +173,8 @@ Despite this performance hit, it might be wondered whether we should use Web Wor
 
 Unfortunately, there's no way to await a message from a Web Worker. The Web Worker API only provides us with an `onmessage` event that triggers a callback _whenever_ the Web Worker posts a message. It is thus not possible to implement Fibonacci where the recursive calls spawn subworkers. The same is true for the experimental [`worker` module][node-worker-threads] in Node.js. (More on the `worker` module in a bit.)
 
+At least for now, we therefore need to give up hope on performant multi-threaded asynchronous recursive functions.
+
 ### Assorted observations
 
 I close with some assorted observations regarding Edge, lower-end devices, Safari, iOS, Android, and memoization.
@@ -191,9 +193,9 @@ What does the comparison look like on a lower-end device with fewer logical core
 
 ![macOS Firefox Chromium sync and async result][macos-firefox-chromium-sync-and-async]
 
-`syncFib` has almost exactly the same calculation times in Firefox and in Chromium-based browsers. But for `asyncFib`, the picture looks similar for Firefox and Chromium-based browsers as it did on the 12-core Dell machine running Ubuntu: `asyncFib(28)` only took 3.5 times as long in Firefox as in Chromium-based browsers (33.1 seconds in Firefox vs. 9.4 seconds in Chromium-based browers).
+`syncFib` has almost exactly the same calculation times in Firefox and in Chromium-based browsers. But for `asyncFib`, the picture looks similar for Firefox and Chromium-based browsers as it did on the 12-core Dell machine running Ubuntu: `asyncFib(28)` only took 3.5 times as long in Firefox as in Chromium-based browsers (33.1 seconds in Firefox vs. 9.4 seconds in Chromium-based browsers).
 
-However, on the 12-core Dell machine running Ubuntu, `asyncFib(28)` took 6 times as long in Firefox as in Chromium-based browsers (18.7 seconds in Firefox vs. 3.1 seconds in Chromium-based browers). And on the 12-core Dell machine running Windows, `asyncFib(28)` took 5.9 times in Firefox (16.4 seconds vs. 2.8 seconds). We'd need to perform the same benchmarks on a 12-core macOS device, or on a 4-core device running Ubuntu or Windows, but these findings suggest that tripling the number of logical cores doesn't triple the speed of `asyncFib` in Chromium-based browsers.
+However, on the 12-core Dell machine running Ubuntu, `asyncFib(28)` took 6 times as long in Firefox as in Chromium-based browsers (18.7 seconds in Firefox vs. 3.1 seconds in Chromium-based browsers). And on the 12-core Dell machine running Windows, `asyncFib(28)` took 5.9 times in Firefox (16.4 seconds vs. 2.8 seconds). We'd need to perform the same benchmarks on a 12-core macOS device, or on a 4-core device running Ubuntu or Windows, but these findings suggest that tripling the number of logical cores doesn't triple the speed of `asyncFib` in Chromium-based browsers.
 
 #### Safari
 
@@ -205,11 +207,11 @@ How does Safari fare on the 4-core MacBook Air? Here are the results alongside t
 
 It turns out that `syncFib` is much faster in Safari: `syncFib(45)` took on average 12.8 seconds in Safari, compared to 25.1 seconds in Chrome and 25.7 seconds in Firefox.
 
-`asyncFib` in Safari is right in between Chromium-based browsers and Firefox: For `asyncFib(28)`, we have 24.7 seconds in Safari vs. the 33.1 seconds in Firefox and 9.4 seconds in Chromium-based browers. I haven't found a tool for macOS that's as powerful at displaying CPU usage as Stacer is on Ubuntu. But I suspect that Safari doesn't use more than one core at once, and Safari's advantage over Firefox with respect to `asyncFib` is due to the same factors as its advantage over Firefox with respect to `syncFib`.
+`asyncFib` in Safari is right in between Chromium-based browsers and Firefox: For `asyncFib(28)`, we have 24.7 seconds in Safari vs. the 33.1 seconds in Firefox and 9.4 seconds in Chromium-based browsers. I haven't found a tool for macOS that's as powerful at displaying CPU usage as Stacer is on Ubuntu. But I suspect that Safari doesn't use more than one core at once, and Safari's advantage over Firefox with respect to `asyncFib` is due to the same factors that explain its advantage over Firefox with respect to `syncFib`.
 
 #### iOS
 
-Here's another odd one: I ran `syncFib` and `asyncFib` in Mobile Safari, Firefox Mobile, and Chrome Mobile on a iPad Pro from November 2015. Unfortunately, the `navigator.hardwareConcurrency` property wasn't available in any of these browsers on iOS. But from what I can tell, the A9X CPU inside the iPad Pro has [2 physical cores][a9x], and I expect it to support hyper-threading, thereby giving us 4 logical cores.
+Here's another odd one: I ran `syncFib` and `asyncFib` in Mobile Safari, Firefox Mobile, and Chrome Mobile on an iPad Pro from November 2015. Unfortunately, the `navigator.hardwareConcurrency` property wasn't available in any of these browsers on iOS. But from what I can tell, the A9X CPU inside the iPad Pro has [2 physical cores][a9x], and I expect it to support hyper-threading, thereby giving us 4 logical cores.
 
 Nevertheless, it turns out that Mobile Safari, Firefox Mobile, and Chrome Mobile were completely on a par on the iPad!
 
@@ -225,11 +227,11 @@ There was a surprise in the other direction when I tested `syncBusy` and `asyncB
 
 `syncFib` was slightly faster in Firefox than in the Chromium-based browsers I tested (Chrome Mobile, Opera Mobile, UC Browser, and Samsung Internet).
 
-But `asyncFib` was _way_ faster in Chromium-based browsers than in Firefox: `asyncFib(27)` took 10.6 times as long in Firefox than in Chromium-based browsers (51.1 seconds vs. 4.8 seconds)! So, the speeup we see in Chromium-based browsers on Android is even more than what we would expect if we assumed that Chromium-based browsers made full use of all 8 logical cores.
+But `asyncFib` was _way_ faster in Chromium-based browsers than in Firefox: `asyncFib(27)` took 10.6 times as long in Firefox than in Chromium-based browsers (51.1 seconds vs. 4.8 seconds)! So, the speedup we see in Chromium-based browsers on Android is even more than what we would expect if we assumed that Chromium-based browsers made full use of all 8 logical cores.
 
 #### Node.js
 
-As already mentioned, Node.js now provides experimental support for [workers][node-worker-threads]. To compare the performance of asynchronous recursive functions, I wrote [`async-explorations-cli`][cli]. This command-line tool allows us to benchmark our six Fibonacci functions in Node.js. Note that Node.js is built on V8, the JavaScript engine that also powers Chromium-based browers. I've discovered a few surprising results:
+As already mentioned, Node.js now provides experimental support for [workers][node-worker-threads]. To compare the performance of asynchronous recursive functions, I wrote [`async-explorations-cli`][cli]. This command-line tool allows us to benchmark our six Fibonacci functions in Node.js. Note that Node.js is built on V8, the JavaScript engine that also powers Chromium-based browsers. I've discovered a few surprising results:
 
 - Some functions ran significantly faster in Node.js than in Chromium-based browsers using Web Workers. In particular, on the 12-core Dell machine running Ubuntu:
 
@@ -246,7 +248,7 @@ As already mentioned, Node.js now provides experimental support for [workers][no
   | `asyncFib(44)`     | 2.7 seconds |                              2.2 seconds |
   | `asyncMemoFib(44)` | 2.7 seconds |                              2.3 seconds |
 
-- The calculation times of the busywork functions were exactly identical in Node.js and in Chromium-based browers.
+- The calculation times of the busywork functions were exactly identical in Node.js and in Chromium-based browsers.
 - `asyncFib(30)` and `asyncMemoFib(30)` exited with a `JavaScript heap out of memory` error.
 
 #### Memoization
@@ -285,7 +287,7 @@ async function asyncMemoFib(n, memo = {}) {
 
 `syncMemoFib` is an `O(n)` function, and an incredibly fast one at that: On the 12-core Dell machine, when invoked with an `n` of 1476 (the largest argument that doesn't return `infinity`), `syncMemoFib` only takes 0.95 milliseconds on average.
 
-I expected `asyncMemoFib` to be much slower than that, but I still expected it to be linear. But oddly enough, the average calculation times of `async` and `asyncMemo` on the 12-core Dell machine running Ubuntu are almost the same in Firefox and _exactly_ the same in Chromium-based browsers:
+I expected `asyncMemoFib` to also be linear, albeit much slower. But oddly enough, the average calculation times of `async` and `asyncMemo` on the 12-core Dell machine running Ubuntu are almost the same in Firefox and _exactly_ the same in Chromium-based browsers:
 
 ![Linux Firefox Chromium async and asyncMemo result][linux-firefox-chromium-async-and-async-memo]
 
