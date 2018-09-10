@@ -14,7 +14,7 @@ JavaScript is a single-threaded language, but browsers use multiple threads to h
 - In Node.js, there is no slowdown when using the experimental worker module; but when not using workers, Node.js can be slower than Chromium-based browsers.
 - Memoization doesn't have any apparent performance benefit for asynchronous recursive functions.
 
-**tl;dr: Asynchronous recursive functions perform the best when run in the main thread in Chromium-based browsers. But they are never faster, and usually much slower, than their synchronous counterparts.**
+**tl;dr: Asynchronous recursive functions perform best when run in the main thread in Chromium-based browsers. But they are never faster, and usually much slower, than their synchronous counterparts.**
 
 To obtain my results, I wrote [Explorations in Asynchronicity][explorations], a benchmark and analysis tool. Here I discuss the most surprising results. Readers are invited to follow along by exploring [more results][explorations-results], analyzing the raw data available through the [public API][api], or running their own benchmarks in the [browser][explorations-benchmarks] or on the [command line][cli].
 
@@ -123,7 +123,7 @@ But something surprising happened when I started breaking down the results by br
 
 ![Linux Firefox Chromium sync and async result][linux-firefox-chromium-sync-and-async]
 
-As we can see, `syncFib` is slightly faster in Firefox than in Chromium-based browsers. But more importantly, `asyncFib` is _much_ faster in Chromium-based browsers than in Firefox: `asyncFib(30)` takes only 9.2 seconds in Chromium-based browsers, compared to a whooping 49.7 seconds in Firefox!
+As we can see, `syncFib` is slightly faster in Firefox than in Chromium-based browsers. But more importantly, `asyncFib` is _much_ faster in Chromium-based browsers than in Firefox: `asyncFib(30)` takes only 9.2 seconds in Chromium-based browsers, compared to a whopping 49.7 seconds in Firefox!
 
 Might the recursive calls actually be called in parallel in Chromium-based browsers? Indeed they are! First, here's the CPU activity for `asyncFib(30)` in Firefox:
 
