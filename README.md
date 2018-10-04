@@ -115,7 +115,7 @@ And here is an almost identical picture for `asyncBusyFib(13)`:
 
 ![Stacer asyncBusy Firefox 13][stacer-async-busy-firefox-13]
 
-Our story could end here: We might conclude that we can't leverage the multi-threaded nature of browsers by implementing recursive algorithms with async functions, as the the sync and async versions of an algorithm are at best equally fast, and at worst the async version is much slower.
+Our story could end here: We might conclude that we can't leverage the multi-threaded nature of browsers by implementing recursive algorithms with async functions, as the sync and async versions of an algorithm are at best equally fast, and at worst the async version is much slower.
 
 ### A new hope: Chromium
 
@@ -153,7 +153,7 @@ A look at the CPU activity confirms that Chromium doesn't use multiple cores in 
 
 ![Stacer asyncBusy Chromium 13][stacer-async-busy-chromium-13]
 
-(As before, flare up of CPU3 towards the beginning happened when I switched to my screenshot tool.)
+(As before, the flare up of CPU3 towards the beginning happened when I switched to my screenshot tool.)
 
 For whatever reason, when it matters, Chromium-based browsers decide to forego parallelism.
 
@@ -195,7 +195,7 @@ What does the comparison look like on a lower-end device with fewer logical core
 
 `syncFib` has almost exactly the same calculation times in Firefox and in Chromium-based browsers. But for `asyncFib`, the picture looks similar for Firefox and Chromium-based browsers as it did on the 12-core Dell machine running Ubuntu: `asyncFib(28)` only took 3.5 times as long in Firefox as in Chromium-based browsers (33.1 seconds in Firefox vs. 9.4 seconds in Chromium-based browsers).
 
-However, on the 12-core Dell machine running Ubuntu, `asyncFib(28)` took 6 times as long in Firefox as in Chromium-based browsers (18.7 seconds in Firefox vs. 3.1 seconds in Chromium-based browsers). And on the 12-core Dell machine running Windows, `asyncFib(28)` took 5.9 times in Firefox (16.4 seconds vs. 2.8 seconds). We'd need to perform the same benchmarks on a 12-core macOS device, or on a 4-core device running Ubuntu or Windows, but these findings suggest that tripling the number of logical cores doesn't triple the speed of `asyncFib` in Chromium-based browsers.
+However, on the 12-core Dell machine running Ubuntu, `asyncFib(28)` took 6 times as long in Firefox as in Chromium-based browsers (18.7 seconds in Firefox vs. 3.1 seconds in Chromium-based browsers). And on the 12-core Dell machine running Windows, `asyncFib(28)` took 5.9 times in Firefox (16.4 seconds vs. 2.8 seconds). We'd need to perform the same benchmarks on a 12-core macOS device, or on a 4-core device running Ubuntu, but these findings suggest that tripling the number of logical cores doesn't triple the speed of `asyncFib` in Chromium-based browsers.
 
 #### Safari
 
