@@ -237,16 +237,17 @@ As already mentioned, Node.js now provides experimental support for [workers][no
 
   |                    |   Node.js   | Chromium-based browsers |
   | ------------------ | :---------: | ----------------------: |
-  | `syncFib(44)`      | 11 seconds  |            19.2 seconds |
-  | `asyncFib(44)`     | 2.7 seconds |             5.2 seconds |
-  | `asyncMemoFib(44)` | 2.7 seconds |             5.4 seconds |
+  | `syncFib(45)`      | 11 seconds  |            19.2 seconds |
+  | `asyncFib(29)`     | 2.6 seconds |             5.2 seconds |
+  | `asyncMemoFib(29)` | 2.7 seconds |             5.4 seconds |
 
 - But using workers didn't slow down any of the six functions in Node.js. As a result, Chromium-based browsers had a leg up when not using Web Workers:
 
-  |                    |   Node.js   | Chromium-based browsers (without worker) |
-  | ------------------ | :---------: | ---------------------------------------: |
-  | `asyncFib(44)`     | 2.7 seconds |                              2.2 seconds |
-  | `asyncMemoFib(44)` | 2.7 seconds |                              2.3 seconds |
+  |                    | Node.js (without worker) | Chromium-based browsers (without worker) |
+  | ------------------ | :----------------------: | ---------------------------------------: |
+  | `syncFib(45)`      |        11 seconds        |                             19.2 seconds |
+  | `asyncFib(29)`     |       2.6 seconds        |                              2.2 seconds |
+  | `asyncMemoFib(29)` |       2.6 seconds        |                              2.3 seconds |
 
 - The calculation times of the busywork functions were exactly identical in Node.js and in Chromium-based browsers.
 - `asyncFib(30)` and `asyncMemoFib(30)` exited with a `JavaScript heap out of memory` error.
