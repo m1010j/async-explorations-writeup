@@ -12,7 +12,7 @@ JavaScript is a single-threaded language, but browsers use multiple threads to h
 - On iOS, even Chromium-based browsers never appear to use multiple logical cores.
 - On Android, Chromium-based browsers execute some asynchronous recursive functions even faster than the number of logical cores available to them would suggest.
 - In Node.js, there is no slowdown when using the experimental worker module; but when not using workers, Node.js can be slower than Chromium-based browsers.
-- Memoization doesn't have any apparent performance benefit for asynchronous recursive functions.
+- Memoization doesn't have any apparent performance benefits for asynchronous recursive functions.
 
 **tl;dr: Asynchronous recursive functions perform best when run in the main thread in Chromium-based browsers. But they are never faster, and usually much slower, than their synchronous counterparts.**
 
